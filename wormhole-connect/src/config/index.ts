@@ -31,6 +31,10 @@ const getEnv = () => {
 export const ENV = getEnv();
 export const isMainnet = ENV === 'MAINNET';
 export const sdkConfig = WormholeContext.getConfig(ENV);
+export const moreNetworks = config.moreNetworks;
+export const moreTokens = config.moreTokens;
+export const pageSubHeader = config.pageSubHeader;
+
 export const pageHeader =
   config.pageHeader === undefined ? '' : config.pageHeader;
 

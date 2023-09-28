@@ -15,7 +15,7 @@ import {
   setTransferRoute,
   TransferInputState,
 } from 'store/transferInput';
-import { CHAINS, TOKENS, pageHeader } from 'config';
+import { CHAINS, TOKENS, pageHeader, pageSubHeader } from 'config';
 import { TokenConfig, Route } from 'config/types';
 import { getTokenDecimals, getWrappedToken } from 'utils';
 import { wh, toChainId } from 'utils/sdk';
@@ -258,7 +258,7 @@ function Bridge() {
 
   return (
     <div className={joinClass([classes.bridgeContent, classes.spacer])}>
-      <PageHeader title={pageHeader} />
+      <PageHeader title={pageHeader} description={pageSubHeader} />
 
       <FromInputs />
       <SwapChains />

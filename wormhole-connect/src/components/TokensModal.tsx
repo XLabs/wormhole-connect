@@ -7,13 +7,13 @@ import React, {
 } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTheme } from '@mui/material/styles';
-import { useMediaQuery } from '@mui/material';
+import { Link, useMediaQuery } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { ChainName } from '@wormhole-foundation/wormhole-connect-sdk';
 import { BigNumber } from 'ethers';
 
 import { RootState } from 'store';
-import { CHAINS } from 'config';
+import { CHAINS, moreTokens } from 'config';
 import { TokenConfig } from 'config/types';
 import {
   setBalances,
@@ -482,6 +482,17 @@ function TokensModal(props: Props) {
         }
         onChange={handleSearch}
       />
+      {moreTokens ? (
+        <Link
+          mx={2}
+          href={moreTokens.replace('{:sourceChain}', chain!)}
+          underline="hover"
+        >
+          More tokens ...
+        </Link>
+      ) : (
+        <></>
+      )}
       <Tabs tabs={tabs} />
     </Modal>
   );

@@ -5,7 +5,7 @@ import {
   ChainConfig,
   ChainName,
 } from '@wormhole-foundation/wormhole-connect-sdk';
-import { CHAINS_ARR, CHAINS } from 'config';
+import { CHAINS_ARR, CHAINS, moreNetworks } from 'config';
 import { CENTER, joinClass } from 'utils/style';
 
 import Header from './Header';
@@ -15,6 +15,7 @@ import Search from './Search';
 import Scroll from './Scroll';
 import TokenIcon from 'icons/TokenIcons';
 import RouteOperator from 'utils/routes/operator';
+import { Link } from '@mui/material';
 
 const useStyles = makeStyles()((theme: any) => ({
   chainsContainer: {
@@ -126,6 +127,13 @@ function ChainsModal(props: Props) {
       <Spacer height={16} />
       <Search placeholder="Search networks" onChange={searchChains} />
       <Spacer height={16} />
+      {moreNetworks ? (
+        <Link mx={2} href={moreNetworks} underline="hover">
+          More networks ...
+        </Link>
+      ) : (
+        <></>
+      )}
       <Scroll
         height="calc(100vh - 300px)"
         blendColor={theme.palette.modal.background}

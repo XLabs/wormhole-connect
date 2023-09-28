@@ -68,6 +68,9 @@ export interface WormholeConnectConfig {
   bridgeDefaults?: BridgeDefaults;
   routes?: string[];
   pageHeader?: string;
+  pageSubHeader?: string;
+  moreTokens?: string;
+  moreNetworks?: string;
 }
 
 type DecimalsMap = Partial<Record<Context, number>> & {

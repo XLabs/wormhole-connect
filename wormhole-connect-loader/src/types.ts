@@ -63,4 +63,9 @@ export interface WormholeConnectConfig {
     link: string;
   };
   bridgeDefaults?: BridgeDefaults;
+  routes?: string[];
+  pageHeader?: string;
+  pageSubHeader?: string;
+  moreTokens?: string;
+  moreNetworks?: string;
 }
