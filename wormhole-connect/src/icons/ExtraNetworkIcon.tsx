@@ -40,7 +40,7 @@ function ExtraNetworkIcon({
   return (
     <div className={classes.container}>
       <img
-        style={{ maxHeight: '100%', maxWidth: '100%', borderRadius: '100%' }}
+        style={{ maxHeight: '100%', maxWidth: '100%' }}
         alt={alt}
         src={icon}
       />
