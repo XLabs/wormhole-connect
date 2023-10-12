@@ -72,6 +72,8 @@ export const CHAINS_ARR =
     ? Object.values(CHAINS).filter((c) => config.networks!.includes(c.key))
     : (Object.values(CHAINS) as ChainConfig[]);
 
+export const EXTRA_NETWOKS = config && config.extraNetworks;
+export const MORE_TOKENS = config && config.moreTokens;
 export const TOKENS = NETWORK_DATA.tokens;
 export const TOKENS_ARR =
   config && config.tokens

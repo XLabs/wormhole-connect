@@ -1,8 +1,9 @@
 import { useMediaQuery } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { useTheme } from '@mui/material/styles';
 import { ChainName, TokenId } from '@wormhole-foundation/wormhole-connect-sdk';
-import { CHAINS } from 'config';
+import { CHAINS, MORE_TOKENS } from 'config';
 import { TokenConfig } from 'config/types';
 import { BigNumber } from 'ethers';
 import TokenIcon from 'icons/TokenIcons';
@@ -26,7 +27,7 @@ import { makeStyles } from 'tss-react/mui';
 import { displayAddress, getDisplayName } from 'utils';
 import { isCosmWasmChain } from 'utils/cosmos';
 import { wh } from 'utils/sdk';
-import { CENTER, NO_INPUT } from 'utils/style';
+import { CENTER, NO_INPUT, joinClass } from 'utils/style';
 import Header from './Header';
 import Modal from './Modal';
 import Scroll from './Scroll';
@@ -59,6 +60,10 @@ const useStyles = makeStyles()((theme: any) => ({
     '&:not(:last-child)': {
       borderBottom: `0.5px solid ${theme.palette.divider}`,
     },
+  },
+  moreTokensRow: {
+    textDecoration: 'none',
+    color: 'inherit',
   },
   tokenRowLeft: {
     display: 'flex',
@@ -110,15 +115,18 @@ const displayNativeChain = (token: TokenConfig): string => {
   return chainConfig.displayName;
 };
 
-function DisplayTokens(props: {
+type DisplayTokensProps = {
   tokens: TokenConfig[];
   balances: any;
   walletAddress: string | undefined;
   chain: any;
-  selectToken: any;
+  selectToken: (tokenKey: string) => void;
   loading: boolean;
   search: string;
-}) {
+  moreTokens?: (href: string, target?: string) => void;
+};
+
+function DisplayTokens(props: DisplayTokensProps) {
   const { classes } = useStyles();
   const theme: any = useTheme();
   const {
@@ -129,6 +137,7 @@ function DisplayTokens(props: {
     selectToken,
     loading,
     search,
+    moreTokens = () => {},
   } = props;
 
   const showCircularProgress = (token: string): boolean => {
@@ -185,6 +194,19 @@ function DisplayTokens(props: {
                 </div>
               </div>
             ))}
+            {MORE_TOKENS ? (
+              <div
+                className={joinClass([classes.tokenRow, classes.moreTokensRow])}
+                onClick={() => MORE_TOKENS && moreTokens(MORE_TOKENS.href)}
+              >
+                <div className={classes.tokenRowLeft}>
+                  <div>{MORE_TOKENS.label}</div>
+                </div>
+                <div className={classes.tokenRowRight}>
+                  <OpenInNewIcon />
+                </div>
+              </div>
+            ) : null}
           </>
         ) : loading ? (
           <div className={classes.loading}>
@@ -228,6 +250,8 @@ function TokensModal(props: Props) {
     supportedSourceTokens,
     supportedDestTokens,
     allSupportedDestTokens,
+    fromChain,
+    toChain,
   } = useSelector((state: RootState) => state.transferInput);
 
   const supportedTokens = useMemo(() => {
@@ -253,6 +277,20 @@ function TokensModal(props: Props) {
     } else {
       setSearch('');
     }
+  };
+
+  const handleMoreTokens = (href: string, target: string = '_self') => {
+    let hydratedHref = href;
+    if (fromChain) {
+      hydratedHref = hydratedHref.replace('{:sourceChain}', fromChain);
+    }
+    if (toChain) {
+      hydratedHref = hydratedHref.replace('{:targetChain}', toChain);
+    }
+    window.open(
+      hydratedHref.replace('&targetChain={:targetChain}', ''),
+      target,
+    );
   };
 
   const displayedTokens = useMemo(() => {
@@ -407,6 +445,7 @@ function TokensModal(props: Props) {
           walletAddress={walletAddress}
           chain={chain}
           selectToken={selectToken}
+          moreTokens={handleMoreTokens}
           loading={loading}
           search={search}
         />
@@ -421,6 +460,7 @@ function TokensModal(props: Props) {
           walletAddress={walletAddress}
           chain={chain}
           selectToken={selectToken}
+          moreTokens={handleMoreTokens}
           loading={loading}
           search={search}
         />

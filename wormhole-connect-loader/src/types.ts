@@ -68,4 +68,29 @@ export interface WormholeConnectConfig {
   bridgeDefaults?: BridgeDefaults;
   routes?: string[];
   pageHeader?: string;
+  pageSubHeader?: string;
+  moreTokens?: MoreTokenConfig;
+  extraNetworks?: ExtraChainConfig;
 }
+
+export type MoreTokenConfig = {
+  label: string;
+  href: string;
+};
+
+export type ExtraChainConfig = {
+  href: string;
+  target?: "_blank" | "_self";
+  description: string;
+  networks: ExtraChainDefintion[];
+};
+
+export type ExtraChainDefintion = {
+  icon: string;
+  href?: string;
+  label: string;
+  name: string;
+  description?: string;
+  target?: "_blank" | "_self";
+  showOpenInNewIcon?: boolean;
+};
