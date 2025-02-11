@@ -395,7 +395,7 @@ const Redeem = () => {
 
   // Header showing the status of the transaction
   const statusHeader = useMemo(() => {
-    let statusText = 'Transaction submitted';
+    let statusText = 'Loading...';
     if (isTxCompleted) {
       statusText = 'Transaction complete';
     } else if (isTxRefunded) {
@@ -405,7 +405,7 @@ const Redeem = () => {
     } else if (isTxDestQueued) {
       statusText = 'Transaction delayed';
     } else if (isTxAttested && !isAutomaticRoute) {
-      statusText = `Ready to claim on ${toChain}`;
+      statusText = `Ready to redeem on ${toChain}`;
     }
 
     return (
@@ -844,12 +844,16 @@ const Redeem = () => {
           variant="primary"
           className={classes.actionButton}
           onClick={() => {
-            dispatch(setRoute('bridge'));
+            if (!config.ui.onlyResume) {
+              dispatch(setRoute('bridge'));
+            }
           }}
         >
-          <Typography textTransform="none">Start a new transaction</Typography>
+          <Typography textTransform="none">
+            {config.ui.onlyResume ? 'Loading...' : 'Start a new transaction'}
+          </Typography>
         </Button>
-        {!isTxCompleted && (
+        {!isTxCompleted && !config.ui.onlyResume && (
           <Typography fontSize="12px" sx={{ margin: 'auto', opacity: 0.6 }}>
             Your current transaction will continue to process in the background.
           </Typography>
@@ -897,6 +901,46 @@ const Redeem = () => {
     routeContext.receipt,
     theme.palette.text.secondary,
   ]);
+
+  if (config.ui.onlyResume) {
+    return (
+      <div className={joinClass([classes.container, classes.spacer])}>
+        {statusHeader}
+
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'inline-flex',
+            alignItems: 'center',
+            marginBottom: '24px',
+            height: '140px',
+          }}
+        >
+          {etaCircle}
+        </Box>
+
+        {config.ui.onlyResume?.customTxDetails()}
+
+        {actionButton}
+        {txDelayedText}
+
+        <AlertBannerV2
+          error
+          content={claimError}
+          show={!!claimError}
+          className={classes.errorBox}
+        />
+        <PoweredByIcon color={theme.palette.text.primary} />
+        <WalletSidebar
+          open={isWalletSidebarOpen}
+          type={TransferWallet.RECEIVING}
+          onClose={() => {
+            setIsWalletSidebarOpen(false);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={joinClass([classes.container, classes.spacer])}>

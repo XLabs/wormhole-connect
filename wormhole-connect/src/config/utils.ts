@@ -51,6 +51,8 @@ export const mergeCustomWrappedTokens = (
 ): WrappedTokenAddresses => {
   if (!custom) return builtin;
 
+  console.log({ builtin, custom });
+
   for (const chain in custom) {
     for (const addr in custom[chain]) {
       // Prevent error when chain is not defined in built-in config
