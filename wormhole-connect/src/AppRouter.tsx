@@ -22,6 +22,19 @@ import RedeemV2 from 'views/v2/Redeem';
 import TxHistory from 'views/v2/TxHistory';
 import { RouteContext } from 'contexts/RouteContext';
 
+import {
+  AttestedTransferReceipt,
+  TransferState,
+} from '@wormhole-foundation/sdk';
+import { parseReceipt } from 'utils/sdkv2';
+import {
+  setIsResumeTx,
+  setTxDetails,
+  setRoute as setRedeemRoute,
+} from './store/redeem';
+import { getWormholeContextV2 } from './config';
+import { setToChain } from './store/transferInput';
+
 const useStyles = makeStyles()((theme: any) => ({
   appContent: {
     textAlign: 'left',
@@ -108,6 +121,71 @@ function AppRouter(props: Props) {
       dispatch(setRoute('search'));
     }
   }, [hasExternalSearch, dispatch]);
+
+  // Handle initial route setup
+  useEffect(() => {
+    const setupInitialRoute = async () => {
+      if (props.config?.ui?.onlyResume) {
+        try {
+          const resumeResult = await config.routes.resumeFromTx({
+            chain: props.config?.ui?.onlyResume.chainName,
+            txid: props.config?.ui?.onlyResume.txHash,
+          });
+
+          if (resumeResult === null) {
+            console.error('Transfer not found');
+            return;
+          }
+
+          const { route } = resumeResult;
+          let { receipt } = resumeResult;
+          const wh = await getWormholeContextV2();
+          const sdkRoute = new (config.routes.get(route).rc)(wh);
+
+          if (receipt.state < TransferState.Attested) {
+            for await (receipt of sdkRoute.track(receipt)) {
+              if (receipt.state >= TransferState.Attested) {
+                break;
+              }
+            }
+          }
+
+          // Set up redeem state
+          const txDetails = await parseReceipt(
+            route,
+            receipt as AttestedTransferReceipt<any>,
+          );
+          if (txDetails) {
+            dispatch(setTxDetails(txDetails));
+            dispatch(setIsResumeTx(true));
+            dispatch(setRedeemRoute(route));
+            dispatch(setRoute('redeem'));
+            dispatch(setToChain(receipt.to));
+          }
+
+          // Set up route context
+          routeContext.setRoute(sdkRoute);
+          routeContext.setReceipt(receipt);
+        } catch (e) {
+          console.error('Error setting up initial redeem route:', e);
+        }
+      }
+    };
+
+    setupInitialRoute();
+  }, []);
+
+  if (props.config?.ui?.onlyResume) {
+    if (route === 'redeem') {
+      return (
+        <div className={classes.appContent}>
+          <RedeemV2 />
+        </div>
+      );
+    } else {
+      return props.config?.ui?.onlyResume?.customLoading();
+    }
+  }
 
   return (
     <div className={classes.appContent}>

@@ -885,6 +885,79 @@ const Redeem = () => {
     theme.palette.text.secondary,
   ]);
 
+  const isLoadingTxn =
+    !isTxCompleted &&
+    !(isTxRefunded || isTxDestQueued) &&
+    !isTxFailed &&
+    !(!isAutomaticRoute && isTxAttested);
+
+  if (config.ui.onlyResume) {
+    return (
+      <div className={joinClass([classes.container, classes.spacer])}>
+        <Stack>
+          <Typography fontWeight={600} fontSize={18}>
+            {claimError
+              ? 'Transaction error'
+              : isTxCompleted
+              ? 'Transaction complete'
+              : isClaimInProgress
+              ? 'Transaction in progress'
+              : isLoadingTxn
+              ? ''
+              : 'Resume transaction'}
+          </Typography>
+        </Stack>
+
+        {(isClaimInProgress || isLoadingTxn) &&
+          config.ui.onlyResume?.customLoading(isClaimInProgress)}
+
+        {claimError && config.ui.onlyResume?.customError(claimError)}
+
+        {!isLoadingTxn &&
+          !isClaimInProgress &&
+          !isTxCompleted &&
+          !claimError &&
+          config.ui.onlyResume?.customTxDetails()}
+
+        {isTxCompleted && config.ui.onlyResume?.customSuccess()}
+
+        {!(isLoadingTxn || isClaimInProgress) &&
+          !isTxCompleted &&
+          !claimError &&
+          (isTxDestQueued || (!isAutomaticRoute && isTxAttested)) &&
+          (isConnectedToReceivingWallet ? (
+            <Button
+              variant="primary"
+              className={classes.actionButton}
+              onClick={handleManualClaim}
+              style={config.ui.onlyResume?.buttonStyles}
+            >
+              <Typography textTransform="none">Execute transaction</Typography>
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              className={classes.actionButton}
+              onClick={() => setIsWalletSidebarOpen(true)}
+              style={config.ui.onlyResume?.buttonStyles}
+            >
+              <Typography textTransform="none">Connect wallet</Typography>
+            </Button>
+          ))}
+
+        {txDelayedText}
+
+        <WalletSidebar
+          open={isWalletSidebarOpen}
+          type={TransferWallet.RECEIVING}
+          onClose={() => {
+            setIsWalletSidebarOpen(false);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={joinClass([classes.container, classes.spacer])}>
       {header}

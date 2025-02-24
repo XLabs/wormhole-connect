@@ -23,6 +23,17 @@ export type UiConfig = {
 
   // Set to true to disable the ability to paste in a token address
   disableUserInputtedTokens?: boolean;
+
+  // initial route for resume transaction only flow
+  onlyResume?: {
+    txHash: string;
+    chainName: Chain;
+    customTxDetails: () => React.ReactNode;
+    customLoading: (isClaimInProgress?: boolean) => React.ReactNode;
+    buttonStyles: React.CSSProperties;
+    customError: (error: string) => React.ReactNode;
+    customSuccess: () => React.ReactNode;
+  };
 };
 
 export interface DefaultInputs {
