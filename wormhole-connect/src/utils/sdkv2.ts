@@ -15,6 +15,7 @@ import {
   circle,
   ChainContext,
   nativeTokenId,
+  CircleBridge,
 } from '@wormhole-foundation/sdk';
 import config from 'config';
 import { NttRoute } from '@wormhole-foundation/sdk-route-ntt';
@@ -23,7 +24,7 @@ import { PublicKey } from '@solana/web3.js';
 import * as splToken from '@solana/spl-token';
 import { WORMSCAN } from 'config/constants';
 import { TokenTuple } from 'config/tokens';
-import { CircleTransferV2 } from '@xlabs/circle-v2-route';
+import { CircleBridgeV2, CircleTransferV2 } from '@xlabs/circle-v2-route';
 
 // Used to represent an initiated transfer. Primarily for the Redeem view.
 export interface TransferInfo {
@@ -130,7 +131,7 @@ export async function parseReceipt(
         },
       );
     case 'Circle CCTP v2':
-      return await parseCCTPV2Receipt(
+      return await parseCCTPReceipt(
         receipt as ReceiptWithAttestation<CircleTransferV2.AttestationReceipt>,
       );
     default:
@@ -232,7 +233,9 @@ const parseTokenBridgeReceipt = async (
 };
 
 const parseCCTPReceipt = async (
-  receipt: ReceiptWithAttestation<CircleTransfer.CircleAttestationReceipt>,
+  receipt:
+    | ReceiptWithAttestation<CircleTransfer.CircleAttestationReceipt>
+    | ReceiptWithAttestation<CircleTransferV2.AttestationReceipt>,
 ): Promise<TransferInfo> => {
   const txData: Partial<TransferInfo> = {
     toChain: receipt.to,
@@ -248,8 +251,15 @@ const parseCCTPReceipt = async (
   if (!receipt.attestation.attestation) {
     throw new Error(`Missing Circle attestation`);
   }
-
-  const { payload } = receipt.attestation.attestation.message;
+  let payload:
+    | CircleBridge.Attestation['message']['payload']
+    | CircleBridgeV2.Attestation['message']['messageBody'];
+  // Handle both CircleBridge and CircleBridgeV2
+  if ('payload' in receipt.attestation.attestation.message) {
+    payload = receipt.attestation.attestation.message.payload;
+  } else {
+    payload = receipt.attestation.attestation.message.messageBody;
+  }
 
   const sourceTokenId = Wormhole.tokenId(
     receipt.from,
@@ -288,91 +298,6 @@ const parseCCTPReceipt = async (
     }
   } else {
     txData.recipient = payload.mintRecipient.toNative(receipt.to).toString();
-  }
-
-  // The attestation doesn't have the destination token address, but we can deduce which it is
-  // just based off the destination chain
-  if (txData.toChain) {
-    const usdcContract = circle.usdcContract.get(
-      config.network,
-      txData.toChain,
-    );
-    if (!usdcContract) {
-      throw new Error(`Couldn't find USDC for destination chain`);
-    }
-    const destinationUsdcLegacy = config.tokens.get(
-      txData.toChain,
-      usdcContract,
-    );
-    if (!destinationUsdcLegacy) {
-      throw new Error(`Couldn't find USDC for destination chain`);
-    }
-
-    txData.receivedToken = destinationUsdcLegacy.tuple;
-  }
-
-  return txData as TransferInfo;
-};
-
-const parseCCTPV2Receipt = async (
-  receipt: ReceiptWithAttestation<CircleTransferV2.AttestationReceipt>,
-): Promise<TransferInfo> => {
-  const txData: Partial<TransferInfo> = {
-    toChain: receipt.to,
-    fromChain: receipt.from,
-  };
-
-  if ('originTxs' in receipt && receipt.originTxs.length > 0) {
-    txData.sendTx = receipt.originTxs[receipt.originTxs.length - 1].txid;
-  } else {
-    throw new Error("Can't find txid in receipt");
-  }
-
-  if (!receipt.attestation.attestation) {
-    throw new Error(`Missing Circle attestation`);
-  }
-
-  const { messageBody } = receipt.attestation.attestation.message;
-
-  const sourceTokenId = Wormhole.tokenId(
-    receipt.from,
-    receipt.from === 'Sui'
-      ? // The `burnToken` from Sui is the keccak256 hash of the USDC token address,
-        // so we need to override it with the actual USDC address
-        circle.usdcContract.get(config.network, receipt.from)!
-      : messageBody.burnToken.toNative(receipt.from).toString(),
-  );
-  const usdcLegacy = config.tokens.get(sourceTokenId);
-
-  if (!usdcLegacy) {
-    throw new Error(`Couldn't find USDC for source chain`);
-  }
-
-  txData.tokenAddress = sourceTokenId.address.toString();
-  txData.token = usdcLegacy.tuple;
-  txData.tokenDecimals = usdcLegacy.decimals;
-  txData.amount = amount.fromBaseUnits(messageBody.amount, usdcLegacy.decimals);
-  txData.receiveAmount = txData.amount;
-
-  txData.sender = messageBody.messageSender.toNative(receipt.from).toString();
-  if (receipt.to === 'Solana') {
-    if (!config.rpcs.Solana) {
-      throw new Error('Missing Solana RPC');
-    }
-    // the recipient on the VAA is the ATA
-    const ata = messageBody.mintRecipient.toNative(receipt.to).toString();
-    const connection = new Connection(config.rpcs.Solana);
-    try {
-      const account = await splToken.getAccount(connection, new PublicKey(ata));
-      txData.recipient = account.owner.toBase58();
-    } catch (e) {
-      console.error(e);
-      txData.recipient = ata;
-    }
-  } else {
-    txData.recipient = messageBody.mintRecipient
-      .toNative(receipt.to)
-      .toString();
   }
 
   // The attestation doesn't have the destination token address, but we can deduce which it is
