@@ -41,6 +41,7 @@ import {
 import { NTT_TEST_CONFIG_TESTNET, NTT_TEST_CONFIG_MAINNET } from './consts';
 import { DEFAULT_ROUTES, nttRoutes } from 'routes/operator';
 import { WormholeConnectTheme } from 'theme';
+import { CircleV2ManualRoute } from '@xlabs/circle-v2-route';
 
 const MAX_URL_SIZE = 30_000; // 30kb (HTTP header limit is set to 32kb)
 
@@ -73,6 +74,8 @@ const parseConfig = (config: string): WormholeConnectConfig => {
       window.MayanRouteSWIFT = MayanRouteSWIFT;
       /* @ts-ignore */
       window.MayanRouteSHUTTLE = MayanRouteSHUTTLE;
+      /* @ts-ignore */
+      window.CircleV2ManualRoute = CircleV2ManualRoute;
       /* @ts-ignore */
       window.testNttRoutesTestnet = () => nttRoutes(NTT_TEST_CONFIG_TESTNET);
       /* @ts-ignore */
@@ -281,6 +284,10 @@ function DemoApp() {
                     <i>{'RouteConstructor'}</i>
                   </li>
                   <li>
+                    <li>
+                      <pre>CircleV2ManualRoute</pre>
+                      <i>{'RouteConstructor'}</i>
+                    </li>
                     <pre>nttRoutes</pre>{' '}
                     <i>{'(NttRoute.Config) -> RouteConstructor[]'}</i>
                   </li>
