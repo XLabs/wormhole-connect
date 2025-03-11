@@ -27,6 +27,7 @@ import type { Chain } from '@wormhole-foundation/sdk';
 import { wormholeConnectHosted } from './hosted';
 import type { HostedParameters } from './hosted';
 import { Token } from 'config/tokens';
+import { CircleV2ManualRoute } from '@xlabs/circle-v2-route';
 
 const {
   AutomaticTokenBridgeRoute,
@@ -65,6 +66,7 @@ export {
   MayanRouteMCTP,
   MayanRouteSWIFT,
   MayanRouteSHUTTLE,
+  CircleV2ManualRoute,
 
   // Utility function for CDN-hosted version of Connect
   wormholeConnectHosted,

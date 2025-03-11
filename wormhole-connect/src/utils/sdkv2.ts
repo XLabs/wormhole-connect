@@ -15,6 +15,7 @@ import {
   circle,
   ChainContext,
   nativeTokenId,
+  CircleBridge,
 } from '@wormhole-foundation/sdk';
 import config from 'config';
 import { NttRoute } from '@wormhole-foundation/sdk-route-ntt';
@@ -23,6 +24,7 @@ import { PublicKey } from '@solana/web3.js';
 import * as splToken from '@solana/spl-token';
 import { WORMSCAN } from 'config/constants';
 import { TokenTuple } from 'config/tokens';
+import { CircleBridgeV2, CircleTransferV2 } from '@xlabs/circle-v2-route';
 
 // Used to represent an initiated transfer. Primarily for the Redeem view.
 export interface TransferInfo {
@@ -128,6 +130,10 @@ export async function parseReceipt(
           params: NttRoute.ValidatedParams;
         },
       );
+    case 'Circle CCTP v2':
+      return await parseCCTPReceipt(
+        receipt as ReceiptWithAttestation<CircleTransferV2.AttestationReceipt>,
+      );
     default:
       throw new Error(`Unknown route type ${route}`);
   }
@@ -227,7 +233,9 @@ const parseTokenBridgeReceipt = async (
 };
 
 const parseCCTPReceipt = async (
-  receipt: ReceiptWithAttestation<CircleTransfer.CircleAttestationReceipt>,
+  receipt:
+    | ReceiptWithAttestation<CircleTransfer.CircleAttestationReceipt>
+    | ReceiptWithAttestation<CircleTransferV2.AttestationReceipt>,
 ): Promise<TransferInfo> => {
   const txData: Partial<TransferInfo> = {
     toChain: receipt.to,
@@ -243,8 +251,15 @@ const parseCCTPReceipt = async (
   if (!receipt.attestation.attestation) {
     throw new Error(`Missing Circle attestation`);
   }
-
-  const { payload } = receipt.attestation.attestation.message;
+  let payload:
+    | CircleBridge.Attestation['message']['payload']
+    | CircleBridgeV2.Attestation['message']['messageBody'];
+  // Handle both CircleBridge and CircleBridgeV2
+  if ('payload' in receipt.attestation.attestation.message) {
+    payload = receipt.attestation.attestation.message.payload;
+  } else {
+    payload = receipt.attestation.attestation.message.messageBody;
+  }
 
   const sourceTokenId = Wormhole.tokenId(
     receipt.from,
