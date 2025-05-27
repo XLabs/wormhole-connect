@@ -1,6 +1,6 @@
 {
   "name": "@xlabs/wormhole-connect",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": "github:xlabs/wormhole-connect",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
