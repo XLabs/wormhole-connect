@@ -24,6 +24,17 @@ export type UiConfig = {
   // Set to true to disable the ability to paste in a token address
   disableUserInputtedTokens?: boolean;
 
+  // initial route for resume transaction only flowAdd commentMore actions
+  onlyResume?: {
+    txHash: string;
+    chainName: Chain;
+    customTxDetails: () => React.ReactNode;
+    customLoading: (isClaimInProgress?: boolean) => React.ReactNode;
+    buttonStyles: React.CSSProperties;
+    customError: (error: string) => React.ReactNode;
+    customSuccess: () => React.ReactNode;
+  };
+
   // Set to true to make Connect hide manual route quotes if there are
   // successful automatic quotes
   onlyOfferManualRoutesAsFallback?: boolean;
